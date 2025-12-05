@@ -6,3 +6,6 @@ google-generativeai
 firebase-admin
 reportlab
 requests
+tensorflow-cpu
+pillow
+numpy
