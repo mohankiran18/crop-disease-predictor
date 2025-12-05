@@ -1,0 +1,11 @@
+# Ignore sensitive keys
+firebase-key.json
+*.json
+secrets.toml
+.streamlit/secrets.toml
+
+# Ignore system files
+venv/
+__pycache__/
+*.pyc
+.DS_Store
