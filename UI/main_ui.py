@@ -434,30 +434,29 @@ elif app_mode == "AI Expert":
         st.rerun()
 
 # ============ FLOATING CHATBOT (CSS HACK) ============
-# 1. We inject the chatbot component (height=450 to match our specific CSS)
+# 1. We inject the chatbot component (height=700)
 utils.embed_chatbot()
 
-# 2. CSS to force the chatbot component to the TOP-RIGHT
+# 2. CSS to position it smartly
 st.markdown(
     """
     <style>
-    /* We target the iframe with exactly height="450" */
-    iframe[height="450"] {
+    /* DESKTOP RULES: TOP RIGHT (as requested) */
+    iframe[height="700"] {
         position: fixed !important;
-        
-        /* Positions it near the top right, just below the header menu */
-        top: 100px !important;
-        right: 20px !important;
-        
+        top: 90px !important;    /* Just below the header */
+        right: 20px !important;  /* To the right */
         z-index: 1000000 !important;
         border: none !important;
     }
     
-    /* Mobile Adjustment */
+    /* MOBILE RULES: BOTTOM RIGHT (Best for small screens) */
     @media only screen and (max-width: 600px) {
-        iframe[height="450"] {
-            top: 80px !important;
-            right: 10px !important;
+        iframe[height="700"] {
+            top: auto !important;     /* Ignore the top setting */
+            bottom: 90px !important;  /* Sit at bottom, ABOVE the red button */
+            right: 15px !important;   /* Slightly tighter to the right */
+            height: 500px !important; /* Shrink height a bit for mobile */
         }
     }
     </style>

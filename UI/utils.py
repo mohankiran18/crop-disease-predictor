@@ -27,13 +27,10 @@ import streamlit.components.v1 as components
 # 1. CONFIGURATION & SETUP
 # ==========================================
 
-# Get the Gemini API key from Streamlit Secrets (Cloud)
 GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", "")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# ⚠️ CRITICAL SETTING: 
-# This size MUST match exactly what you used when training your model.
 IMAGE_SIZE = (128, 128) 
 
 # ==========================================
@@ -61,7 +58,7 @@ def load_local_model():
 model = load_local_model()
 
 # ==========================================
-# 3. PREDICTION LOGIC (The "Brain")
+# 3. PREDICTION LOGIC
 # ==========================================
 
 def predict_via_api(image_file):
@@ -281,7 +278,7 @@ def check_backend_status():
 def embed_chatbot():
     """
     Injects the Chatbase chatbot script.
-    CRITICAL: Height is set to 450 to match the CSS selector in main_ui.py.
+    We used HEIGHT=700 to ensure a clean match for our CSS in main_ui.py.
     """
     components.html(
         """
@@ -289,6 +286,6 @@ def embed_chatbot():
         (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="ZAWM2yGNRx2n7ggVz-fDk";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
         </script>
         """,
-        height=450, # <--- THIS MUST BE 450
+        height=700, # <--- NEW HEIGHT
         scrolling=False
     )
