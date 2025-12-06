@@ -281,8 +281,8 @@ def check_backend_status():
 def embed_chatbot():
     """
     Injects the Chatbase chatbot script into the Streamlit app.
-    Using height=500 is necessary to allow the chat window to open fully.
-    We place this in the Sidebar (in main_ui.py) so the empty space doesn't break the main layout.
+    We keep height=500 to allow the window to open freely.
+    The positioning is handled by CSS in main_ui.py.
     """
     components.html(
         """
@@ -290,5 +290,6 @@ def embed_chatbot():
         (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="ZAWM2yGNRx2n7ggVz-fDk";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
         </script>
         """,
-        height=500, 
+        height=500,
+        scrolling=False
     )

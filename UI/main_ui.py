@@ -51,11 +51,7 @@ with st.sidebar:
     else:
         st.error("Backend Offline 🔴")
     
-    # ============ CHATBOT (Sidebar Location) ============
-    # Placed here so the empty space is hidden in the menu, 
-    # not on the main dashboard.
-    st.markdown("### 💬 AI Support")
-    utils.embed_chatbot()
+    # NOTE: Chatbot removed from sidebar to place it on the main screen floating
 
 # ============ PAGES ============
 
@@ -438,3 +434,24 @@ elif app_mode == "AI Expert":
     if p := st.chat_input("Ask about farming..."):
         st.session_state.messages.append({"role": "user", "content": p})
         st.rerun()
+
+# ============ FLOATING CHATBOT (CSS HACK) ============
+# 1. We inject the chatbot component (height=500 for the open window)
+utils.embed_chatbot()
+
+# 2. CSS to force the chatbot component to the bottom-right corner
+#    This removes it from the page layout flow, eliminating the white space.
+st.markdown(
+    """
+    <style>
+    iframe[height="500"] {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        z-index: 999999;
+        border: none;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
