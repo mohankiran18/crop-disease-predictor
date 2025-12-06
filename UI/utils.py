@@ -155,50 +155,115 @@ db = get_db()
 # ==========================================
 
 def get_custom_css():
-    """Returns the CSS code to make the app look beautiful."""
+    """Returns the CSS code for a beautiful Glassmorphism UI."""
     return """
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        /* Import Google Font */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
         
-        /* Main Background Image */
-        .stApp { 
-            background: url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=3870&auto=format&fit=crop'); 
-            background-size: cover; 
-            background-attachment: fixed; 
+        /* 1. APP BACKGROUND */
+        .stApp {
+            background: url('https://images.unsplash.com/photo-1595113316349-9fa4eb24f884?q=80&w=3872&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
-        
-        /* Make Sidebar White and Glassy */
-        section[data-testid="stSidebar"] { 
-            background-color: rgba(255, 255, 255, 0.95) !important; 
-            border-right: 1px solid rgba(0,0,0,0.1); 
+
+        /* 2. TEXT STYLING */
+        html, body, [class*="css"] {
+            font-family: 'Poppins', sans-serif;
         }
-        
-        /* Styling for Cards and Containers */
-        .stCard, div[data-testid="stFileUploader"], div[data-testid="stDataFrame"], 
-        div[data-testid="stChatInput"], div[data-testid="stPlotlyChart"], 
-        div[data-testid="stSpinner"], div[data-testid="stExpander"] { 
-            background-color: rgba(255, 255, 255, 0.95); 
-            border-radius: 12px; 
-            padding: 20px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
-            border: 1px solid #E5E7EB; 
-            margin-bottom: 20px;
+        h1, h2, h3 {
+            color: #022c22 !important; /* Dark Green */
+            text-shadow: 0px 2px 4px rgba(255,255,255,0.7);
+            font-weight: 700 !important;
         }
-        
-        /* Green Buttons */
-        .stButton>button { 
-            background: #059669; 
-            color: white; 
-            border-radius: 8px; 
-            border: none; 
-            padding: 0.7rem 1.2rem; 
-            font-weight: 600; 
-            width: 100%; 
-        } 
-        .stButton>button:hover { background: #047857; }
-        
-        /* Headers and Text */
-        h1, h2, h3 { color: #064E3B !important; font-family: 'Inter', sans-serif;}
+        p, label, span, div {
+            color: #111827 !important; /* Dark Grey for readability */
+        }
+
+        /* 3. THE "FROSTED GLASS" EFFECT (The Magic Part) */
+        section[data-testid="stSidebar"],
+        .stCard,
+        div[data-testid="stFileUploader"],
+        div[data-testid="stDataFrame"],
+        div[data-testid="stChatInput"],
+        div[data-testid="stPlotlyChart"],
+        div[data-testid="stSpinner"],
+        div[data-testid="stExpander"],
+        div[data-testid="stChatMessage"] {
+            background: rgba(255, 255, 255, 0.60) !important; /* 60% opacity */
+            backdrop-filter: blur(20px); /* Heavy Blur */
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* 4. HOVER EFFECTS */
+        .stCard:hover, div[data-testid="stFileUploader"]:hover {
+            transform: translateY(-5px); /* Float Up */
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        /* 5. SIDEBAR SPECIFIC */
+        section[data-testid="stSidebar"] {
+            background: rgba(240, 253, 244, 0.85) !important; /* Slightly more solid for sidebar */
+            border-right: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* 6. BUTTONS (Gradient & Glow) */
+        .stButton>button {
+            background: linear-gradient(90deg, #10B981 0%, #059669 100%);
+            color: white !important;
+            border: none;
+            border-radius: 12px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        .stButton>button:hover {
+            background: linear-gradient(90deg, #059669 0%, #047857 100%);
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+        }
+        .stButton>button:active {
+            transform: scale(0.98);
+        }
+
+        /* 7. CUSTOM PILLS & HEADERS */
+        .header-pill {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            color: #065f46;
+            font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.8);
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* 8. TABS STYLING */
+        .stTabs [data-baseweb="tab-list"] {
+            background-color: rgba(255, 255, 255, 0.5);
+            padding: 8px;
+            border-radius: 15px;
+            gap: 10px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #10B981 !important;
+            color: white !important;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
     </style>
     """
 
