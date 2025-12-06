@@ -50,8 +50,6 @@ with st.sidebar:
         st.success("Backend Online 🟢")
     else:
         st.error("Backend Offline 🔴")
-    
-    # NOTE: Chatbot removed from sidebar to place it on the main screen floating
 
 # ============ PAGES ============
 
@@ -436,20 +434,22 @@ elif app_mode == "AI Expert":
         st.rerun()
 
 # ============ FLOATING CHATBOT (CSS HACK) ============
-# 1. We inject the chatbot component (height=500 for the open window)
+# 1. We inject the chatbot component (height=450 to match our specific CSS)
 utils.embed_chatbot()
 
 # 2. CSS to force the chatbot component to the bottom-right corner
-#    This removes it from the page layout flow, eliminating the white space.
 st.markdown(
     """
     <style>
-    iframe[height="500"] {
-        position: fixed;
-        bottom: 10px;
-        right: 10px;
-        z-index: 999999;
-        border: none;
+    /* We target the iframe with exactly height="450". 
+      We use !important to override Streamlit's default layout and force it to the bottom-right.
+    */
+    iframe[height="450"] {
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        z-index: 9999999 !important;
+        border: none !important;
     }
     </style>
     """,
