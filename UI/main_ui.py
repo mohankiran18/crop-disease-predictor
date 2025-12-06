@@ -437,28 +437,25 @@ elif app_mode == "AI Expert":
 # 1. We inject the chatbot component (height=450 to match our specific CSS)
 utils.embed_chatbot()
 
-# 2. CSS to force the chatbot component to the bottom-right corner
-# 2. UPDATED CSS: Moves chatbot to TOP-RIGHT (just below the main menu)
+# 2. CSS to force the chatbot component to the TOP-RIGHT
 st.markdown(
     """
     <style>
-    /* Target the chatbot iframe */
+    /* We target the iframe with exactly height="450" */
     iframe[height="450"] {
         position: fixed !important;
         
-        /* Move to the Top Right */
-        top: 90px !important;  /* 90px down to avoid covering the Streamlit menu */
+        /* Positions it near the top right, just below the header menu */
+        top: 100px !important;
         right: 20px !important;
         
-        /* Ensure it sits on top of everything */
-        z-index: 9999999 !important;
+        z-index: 1000000 !important;
         border: none !important;
     }
-
+    
     /* Mobile Adjustment */
     @media only screen and (max-width: 600px) {
         iframe[height="450"] {
-            /* On mobile, we can move it a bit tighter to the edge */
             top: 80px !important;
             right: 10px !important;
         }

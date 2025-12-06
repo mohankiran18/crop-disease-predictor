@@ -281,8 +281,7 @@ def check_backend_status():
 def embed_chatbot():
     """
     Injects the Chatbase chatbot script.
-    UPDATED: Height is set to 450 to match the CSS selector in main_ui.py.
-    This ensures the positioning works correctly.
+    CRITICAL: Height is set to 450 to match the CSS selector in main_ui.py.
     """
     components.html(
         """
@@ -290,6 +289,6 @@ def embed_chatbot():
         (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="ZAWM2yGNRx2n7ggVz-fDk";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
         </script>
         """,
-        height=450, 
+        height=450, # <--- THIS MUST BE 450
         scrolling=False
     )
