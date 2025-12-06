@@ -50,6 +50,12 @@ with st.sidebar:
         st.success("Backend Online 🟢")
     else:
         st.error("Backend Offline 🔴")
+    
+    # ============ CHATBOT (Sidebar Location) ============
+    # Placed here so the empty space is hidden in the menu, 
+    # not on the main dashboard.
+    st.markdown("### 💬 AI Support")
+    utils.embed_chatbot()
 
 # ============ PAGES ============
 
@@ -432,7 +438,3 @@ elif app_mode == "AI Expert":
     if p := st.chat_input("Ask about farming..."):
         st.session_state.messages.append({"role": "user", "content": p})
         st.rerun()
-
-# ============ CHATBOT INTEGRATION ============
-# This function call creates the chat bubble on every page
-utils.embed_chatbot()
