@@ -12,7 +12,7 @@ from PIL import Image
 # Machine Learning Imports
 import tensorflow as tf
 
-# PDF Generation
+# PDF Generation Imports (For creating the download report)
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -20,32 +20,38 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# ============ CONFIGURATION ============
+# ==========================================
+# 1. CONFIGURATION & SETUP
+# ==========================================
 
+# Get the Gemini API key from Streamlit Secrets (Cloud)
 GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", "")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# IMPORTANT: Change this to match your model's training input!
-# Common sizes: (128, 128), (224, 224), (256, 256)
+# ⚠️ CRITICAL SETTING: 
+# This size MUST match exactly what you used when training your model.
+# If you trained with (224, 224), change this number!
 IMAGE_SIZE = (128, 128) 
 
-# ============ MODEL LOADING ============
+# ==========================================
+# 2. LOAD THE AI MODEL
+# ==========================================
 
-@st.cache_resource
+@st.cache_resource # This tells Streamlit: "Load this once and keep it in memory"
 def load_local_model():
-    """Loads the model from the Backend_Model folder."""
     try:
-        # We need to go 'up' one level from UI folder to find Backend_Model
+        # Find the folder where the app is running
         base_path = os.path.dirname(os.path.dirname(__file__))
         
-        # Try finding the .keras file first
+        # Look for the model in the 'Backend_Model' folder first
         model_path = os.path.join(base_path, "Backend_Model", "trained_model.keras")
         
-        # Fallback to .h5 if .keras doesn't exist
+        # If not found, look in the 'plant_disease' folder (Backup)
         if not os.path.exists(model_path):
              model_path = os.path.join(base_path, "plant_disease", "trained_model.h5")
 
+        # Load the model using TensorFlow
         if os.path.exists(model_path):
             return tf.keras.models.load_model(model_path)
         else:
@@ -55,37 +61,48 @@ def load_local_model():
         st.error(f"Error loading model: {e}")
         return None
 
-# Load model once at startup
+# Load the model immediately when the app starts
 model = load_local_model()
 
-# ============ PREDICTION FUNCTION ============
+# ==========================================
+# 3. PREDICTION LOGIC (The "Brain")
+# ==========================================
 
 def predict_via_api(image_file):
-    """
-    Runs prediction directly in the app (No external backend needed).
-    """
     if model is None:
         return "Model Failed to Load", 0.0
 
     try:
-        # 1. Preprocess the image
+        # Step A: Open the image file
         image = Image.open(image_file)
-        image = image.resize(IMAGE_SIZE) # Resize to match training
+        
+        # Step B: Fix for PNG images (Transparency issue)
+        # If the image has a transparent background (Alpha channel), convert to standard RGB.
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+            
+        # Step C: Resize the image to match the AI model's expected size
+        image = image.resize(IMAGE_SIZE)
+        
+        # Step D: Convert image to numbers (numpy array)
         img_array = np.array(image)
         
-        # Normalize if your training did (usually /255.0)
-        # Assuming standard Rescaling(1./255)
-        img_array = img_array.astype("float32") / 255.0
+        # Step E: Normalize the numbers (Make them floats)
+        # NOTE: If your model expects numbers 0-1, uncomment the "/ 255.0" part.
+        # If your model expects 0-255, keep it as is.
+        img_array = img_array.astype("float32") # / 255.0
         
-        # Add batch dimension (1, 128, 128, 3)
+        # Step F: Add a "Batch" dimension
+        # The model expects a list of images, even if it's just one.
+        # Shape becomes: (1, 128, 128, 3)
         img_array = np.expand_dims(img_array, axis=0)
 
-        # 2. Predict
+        # Step G: Make the prediction
         predictions = model.predict(img_array)
         confidence = float(np.max(predictions))
         
-        # 3. Get Class Name (You need your class names list here!)
-        # Replace this list with your ACTUAL class names from training
+        # Step H: Match the result to a Disease Name
+        # IMPORTANT: This list must be in the exact alphabetical order of your training folders.
         class_names = [
             "Apple___Apple_scab", "Apple___Black_rot", "Apple___Cedar_apple_rust", "Apple___healthy",
             "Blueberry___healthy", "Cherry___Powdery_mildew", "Cherry___healthy", 
@@ -101,6 +118,7 @@ def predict_via_api(image_file):
             "Tomato___Tomato_Yellow_Leaf_Curl_Virus", "Tomato___Tomato_mosaic_virus", "Tomato___healthy"
         ]
         
+        # Get the name with the highest score
         predicted_class = class_names[np.argmax(predictions)]
         
         return predicted_class, confidence
@@ -108,16 +126,21 @@ def predict_via_api(image_file):
     except Exception as e:
         return f"Prediction Error: {e}", 0.0
 
-# ============ DATABASE ============
+# ==========================================
+# 4. DATABASE CONNECTION
+# ==========================================
 
 @st.cache_resource
 def get_db():
     try:
+        # Check if Firebase is already running to avoid errors
         if not firebase_admin._apps:
+            # Plan A: Try loading keys from Streamlit Cloud Secrets
             if "firebase" in st.secrets:
                 key_dict = dict(st.secrets["firebase"])
                 cred = credentials.Certificate(key_dict)
                 firebase_admin.initialize_app(cred)
+            # Plan B: Try loading from a local file (for laptop testing)
             elif os.path.exists("firebase-key.json"):
                 cred = credentials.Certificate("firebase-key.json")
                 firebase_admin.initialize_app(cred)
@@ -127,41 +150,76 @@ def get_db():
 
 db = get_db()
 
-# ============ STYLING ============
+# ==========================================
+# 5. STYLING & HELPERS
+# ==========================================
 
 def get_custom_css():
+    """Returns the CSS code to make the app look beautiful."""
     return """
     <style>
-        /* Keeping your existing CSS */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        .stApp { background: url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=3870&auto=format&fit=crop'); background-size: cover; background-attachment: fixed; }
-        section[data-testid="stSidebar"] { background-color: rgba(255, 255, 255, 0.95) !important; border-right: 1px solid rgba(0,0,0,0.1); }
-        .header-pill { background-color: rgba(255, 255, 255, 0.9); padding: 10px 20px; border-radius: 10px; display: inline-block; color: #064E3B; font-weight: 700; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        div[data-testid="stFileUploader"], div[data-testid="stDataFrame"], div[data-testid="stChatInput"], div[data-testid="stPlotlyChart"], div[data-testid="stSpinner"], div[data-testid="stExpander"] { background-color: rgba(255, 255, 255, 0.95); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #E5E7EB; }
-        .stCard { background-color: rgba(255, 255, 255, 0.95) !important; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important; border: 1px solid #E5E7EB; }
-        .hero-container { background-color: rgba(255, 255, 255, 0.95); border-radius: 15px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .hero-text h1 { color: #064E3B; font-size: 2.5rem; margin:0;} .hero-text p { color: #374151; font-size: 1.1rem; margin-top:5px;} .hero-date { color: #059669; font-weight: 600; font-size: 1.2rem; text-align: right;}
-        .stButton>button { background: #059669; color: white; border-radius: 8px; border: none; padding: 0.7rem 1.2rem; font-weight: 600; width: 100%; } .stButton>button:hover { background: #047857; }
-        div[data-testid="stChatMessage"] { background-color: rgba(255, 255, 255, 0.95); border-radius: 12px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 10px; border: 1px solid #E5E7EB; } div[data-testid="stChatMessage"] p { color: #374151; }
-        .stTabs [data-baseweb="tab-list"] { gap: 8px; background-color: rgba(255, 255, 255, 0.95); padding: 10px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E5E7EB; margin-bottom: 20px; } .stTabs [data-baseweb="tab"] { height: 45px; white-space: pre-wrap; background-color: transparent; border-radius: 8px; color: #374151; font-weight: 600; border: none; } .stTabs [aria-selected="true"] { background-color: #059669 !important; color: white !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        /* Main Background Image */
+        .stApp { 
+            background: url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=3870&auto=format&fit=crop'); 
+            background-size: cover; 
+            background-attachment: fixed; 
+        }
+        
+        /* Make Sidebar White and Glassy */
+        section[data-testid="stSidebar"] { 
+            background-color: rgba(255, 255, 255, 0.95) !important; 
+            border-right: 1px solid rgba(0,0,0,0.1); 
+        }
+        
+        /* Styling for Cards and Containers */
+        .stCard, div[data-testid="stFileUploader"], div[data-testid="stDataFrame"], 
+        div[data-testid="stChatInput"], div[data-testid="stPlotlyChart"], 
+        div[data-testid="stSpinner"], div[data-testid="stExpander"] { 
+            background-color: rgba(255, 255, 255, 0.95); 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+            border: 1px solid #E5E7EB; 
+            margin-bottom: 20px;
+        }
+        
+        /* Green Buttons */
+        .stButton>button { 
+            background: #059669; 
+            color: white; 
+            border-radius: 8px; 
+            border: none; 
+            padding: 0.7rem 1.2rem; 
+            font-weight: 600; 
+            width: 100%; 
+        } 
+        .stButton>button:hover { background: #047857; }
+        
+        /* Headers and Text */
         h1, h2, h3 { color: #064E3B !important; font-family: 'Inter', sans-serif;}
     </style>
     """
 
-# ============ LOGIC FUNCTIONS ============
-
 def clean_markdown_for_pdf(text):
-    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-    text = re.sub(r'##\s*(.*)', r'<br/><font size=14 color="#064E3B"><b>\1</b></font><br/>', text)
-    text = text.replace('\n', '<br/>')
+    """Cleans up the AI text so it looks good in a PDF."""
+    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text) # Bold text
+    text = re.sub(r'##\s*(.*)', r'<br/><font size=14 color="#064E3B"><b>\1</b></font><br/>', text) # Headers
+    text = text.replace('\n', '<br/>') # New lines
     return text
 
 def create_pdf_report(disease: str, details_text: str) -> io.BytesIO:
+    """Generates the downloadable PDF report."""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=72)
     styles = getSampleStyleSheet()
+    
+    # Define styles for Title and Body
     title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=26, textColor='#064E3B', spaceAfter=10, alignment=TA_CENTER)
     body_style = ParagraphStyle('Body', parent=styles['Normal'], fontSize=11, leading=16, spaceAfter=12)
+    
+    # Build the PDF content
     story = [
         Paragraph("Crop Disease Report", title_style),
         Paragraph(f"Diagnosis: {disease} | Date: {datetime.datetime.now().strftime('%Y-%m-%d')}", body_style),
@@ -173,6 +231,7 @@ def create_pdf_report(disease: str, details_text: str) -> io.BytesIO:
     return buffer
 
 def get_disease_details_gemini(disease_name, lang_code="en"):
+    """Asks Google Gemini AI for details about the disease."""
     try:
         model = genai.GenerativeModel("gemini-2.5-flash")
         prompt = (f"Explain {disease_name} in language: {lang_code}.\n"
@@ -183,6 +242,7 @@ def get_disease_details_gemini(disease_name, lang_code="en"):
         return "AI Service Unavailable."
 
 def parse_sections(text):
+    """Splits the AI response into separate tabs (Causes, Symptoms, etc.)."""
     sections = {"Causes": "", "Symptoms": "", "Precautions": "", "Treatments": ""}
     curr = None
     for line in text.split('\n'):
@@ -194,7 +254,7 @@ def parse_sections(text):
     return sections
 
 def check_backend_status():
-    # Now that we run locally, the 'backend' is the model itself
+    """Simple check to see if the model loaded correctly."""
     if model is not None:
         return True
     return False
