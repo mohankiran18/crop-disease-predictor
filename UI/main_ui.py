@@ -403,11 +403,23 @@ elif app_mode == "AI Expert":
             with st.spinner("Thinking..."):
                 try:
                     model = genai.GenerativeModel("gemini-2.5-flash")
-                    prompt = (
-                        "You are a friendly agricultural crop expert helping Indian farmers. "
-                        "Explain in simple language, step-by-step.\n\n"
-                        f"Question: {st.session_state.messages[-1]['content']}"
+                    # Updated Prompt with Language Rules
+                    system_rules = (
+                        "You are an expert Agricultural Consultant. "
+                        "Your goal is to help farmers and users with accurate farming advice.\n\n"
+                        "CRITICAL INSTRUCTIONS FOR LANGUAGE ADAPTATION:\n"
+                        "1. DETECT the language of the user's question.\n"
+                        "2. ADAPT your response based on the following rules:\n"
+                        "   - IF English: Reply in clear, professional English.\n"
+                        "   - IF Hindi or Hinglish: Reply in friendly Hinglish. Start with 'Ram Ram, Kisan bhai'.\n"
+                        "   - IF Telugu: Reply in Telugu script. Start with 'Namaskaram Raitu bidda'.\n"
+                        "   - IF Tamil: Reply in Tamil script. Start with 'Vanakkam Vivasaayi Thozhagale'.\n"
+                        "3. ALWAYS match the user's language and script."
                     )
+
+                    # Combine the rules with the user's question
+                    prompt = f"{system_rules}\n\nQuestion: {st.session_state.messages[-1]['content']}"
+                    
                     resp = model.generate_content(prompt)
                     answer = resp.text
                 except Exception as e:
