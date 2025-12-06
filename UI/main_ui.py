@@ -432,3 +432,7 @@ elif app_mode == "AI Expert":
     if p := st.chat_input("Ask about farming..."):
         st.session_state.messages.append({"role": "user", "content": p})
         st.rerun()
+
+# ============ CHATBOT INTEGRATION ============
+# This function call creates the chat bubble on every page
+utils.embed_chatbot()
