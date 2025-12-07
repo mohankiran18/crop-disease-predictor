@@ -276,16 +276,41 @@ def check_backend_status():
     return False
 
 def embed_chatbot():
-    """
-    Injects the Chatbase chatbot script.
-    We used HEIGHT=700 to ensure a clean match for our CSS in main_ui.py.
-    """
-    components.html(
-        """
+    components.html("""
         <script>
-        (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="ZAWM2yGNRx2n7ggVz-fDk";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+            function loadChatbase() {
+                const parentDoc = window.parent.document;
+
+                if (!parentDoc || !parentDoc.body) {
+                    return setTimeout(loadChatbase, 200);
+                }
+
+                // Add config script
+                if (!parentDoc.getElementById("chatbase-config")) {
+                    const config = parentDoc.createElement("script");
+                    config.id = "chatbase-config";
+                    config.innerHTML = `
+                        window.embeddedChatbotConfig = {
+                            chatbotId: "ZAWM2yGNRx2n7ggVz-fDk",
+                            domain: "www.chatbase.co"
+                        }
+                    `;
+                    parentDoc.head.appendChild(config);
+                }
+
+                // Add main embed script
+                if (!parentDoc.getElementById("chatbase-embed")) {
+                    const script = parentDoc.createElement("script");
+                    script.id = "chatbase-embed";
+                    script.src = "https://www.chatbase.co/embed.min.js";
+                    script.defer = true;
+                    script.setAttribute("chatbotId", "ZAWM2yGNRx2n7ggVz-fDk");
+                    script.setAttribute("domain", "www.chatbase.co");
+                    parentDoc.body.appendChild(script);
+                }
+            }
+
+            setTimeout(loadChatbase, 500);
         </script>
-        """,
-        height=700, # <--- NEW HEIGHT
-        scrolling=False
-    )
+    """, height=0, scrolling=False)
+
